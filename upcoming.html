@@ -84,19 +84,18 @@
                                 upcomingAnniversaries.push({
                                     name: name.trim(),
                                     years: yearsAtCompany,
-                                    month: new Intl.DateTimeFormat('en-US', { month: 'short' }).format(anniversaryDate),
+                                    month: month,
                                     day: day
                                 });
                             }
                         }
                     });
 
-                    // Sort upcoming anniversaries by date
+                    // Sort upcoming anniversaries by date (month, day)
                     upcomingAnniversaries.sort((a, b) => {
-                        if (a.month !== b.month) {
-                            return a.month.localeCompare(b.month);
-                        }
-                        return a.day - b.day;
+                        const dateA = new Date(currentYear, a.month - 1, a.day);
+                        const dateB = new Date(currentYear, b.month - 1, b.day);
+                        return dateA - dateB;
                     });
 
                     // Limit displayed items to 8
@@ -116,7 +115,7 @@
                         yearsDiv.className = 'years';
 
                         // Set the text content and class for the month and day <span> elements
-                        monthSpan.textContent = anniversary.month;
+                        monthSpan.textContent = new Intl.DateTimeFormat('en-US', { month: 'short' }).format(new Date(currentYear, anniversary.month - 1, anniversary.day));
                         monthSpan.className = 'month';
                         daySpan.textContent = anniversary.day;
                         daySpan.className = 'day';
