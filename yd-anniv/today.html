@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Work Anniversaries</title>
+    <style>
+        .employee {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: "DM Sans", Arial, Helvetica, sans-serif;
+            font-size: 30px;
+            font-weight: 500;
+        }
+        .name {
+            padding-right: 5px;
+        }
+        .years {
+        }
+    </style>
+</head>
+<body>
+    <div id="anniversaryList">
+        <!-- Employee anniversaries will be displayed here -->
+    </div>
+
+    <script>
+        // Your JavaScript code goes here
+        document.addEventListener("DOMContentLoaded", function () {
+            fetch('anniversaries.csv')
+                .then(response => response.text())
+                .then(data => {
+                    const currentDate = new Date();
+                    const currentYear = currentDate.getFullYear();
+
+                    const anniversaries = data.split('\n');
+                    const anniversaryList = document.getElementById('anniversaryList');
+
+                    anniversaries.forEach(anniversary => {
+                        const [name, dateStr] = anniversary.split(',');
+                        const [year, month, day] = dateStr.split('-');
+
+                        const anniversaryDate = new Date(currentYear, month - 1, day);
+
+                        const yearsAtCompany = currentYear - year;
+
+                        if (yearsAtCompany > 0 && anniversaryDate.getMonth() === currentDate.getMonth() && anniversaryDate.getDate() === currentDate.getDate()) {
+                            const employeeContainer = document.createElement('div');
+                            const nameDiv = document.createElement('div');
+                            const yearsDiv = document.createElement('div');
+                            employeeContainer.className = 'employee';
+
+                            nameDiv.textContent = name.trim();
+                            nameDiv.className = 'name';
+
+                            yearsDiv.textContent = `• ${yearsAtCompany} years`;
+                            yearsDiv.className = 'years';
+
+                            employeeContainer.appendChild(nameDiv);
+                            employeeContainer.appendChild(yearsDiv);
+                            anniversaryList.appendChild(employeeContainer);
+                            
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading CSV file:', error);
+                });
+        });
+    </script>
+</body>
+</html>

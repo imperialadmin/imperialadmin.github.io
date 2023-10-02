@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Work Anniversaries</title>
+    <style>
+        /* Add your CSS styles here */
+    </style>
+</head>
+<body>
+    <div id="anniversaryList">
+        <!-- Employee anniversaries will be displayed here -->
+    </div>
+
+    <script>
+        // Your JavaScript code goes here
+        document.addEventListener("DOMContentLoaded", function () {
+            fetch('anniversaries.csv')
+                .then(response => response.text())
+                .then(data => {
+                    const currentDate = new Date();
+                    const currentYear = currentDate.getFullYear();
+                    const currentMonth = currentDate.getMonth() + 1; // Months are 0-indexed
+
+                    const anniversaries = data.split('\n');
+                    const anniversaryList = document.getElementById('anniversaryList');
+
+                    anniversaries.forEach(anniversary => {
+                        const [name, dateStr] = anniversary.split(',');
+                        const [year, month, day] = dateStr.split('-');
+
+                        const anniversaryDate = new Date(currentYear, month - 1, day);
+
+                        const yearsAtCompany = currentYear - year;
+
+                        if (anniversaryDate.getMonth() + 1 === currentMonth && yearsAtCompany > 0) {
+                            const employeeInfo = document.createElement('p');
+                            employeeInfo.textContent = `${name.trim()}  (${yearsAtCompany} years.)`;
+                            anniversaryList.appendChild(employeeInfo);
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading CSV file:', error);
+                });
+        });
+    </script>
+</body>
+</html>

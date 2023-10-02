@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Work Anniversaries</title>
+    <style>
+        #anniversaryList {
+            margin: auto;
+            padding: 20px;
+            width:1000px;
+            background-color: rgb(28, 28, 28);
+        }
+        .employee {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: "DM Sans", Arial, Helvetica, sans-serif;
+            font-size: 30px;
+            font-weight: 500;
+            background-color:rgb(237, 237, 237);
+            padding: 30px;
+            margin: 10px 0;
+        }
+        .name {
+            padding-right: 5px;
+        }
+        .years {
+            padding-right: 10px;
+        }
+        .date {
+            padding-top: 3px;
+            font-size: 18px;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div id="anniversaryList">
+        <!-- Employee anniversaries will be displayed here -->
+    </div>
+
+    <script>
+        // Your JavaScript code goes here
+        document.addEventListener("DOMContentLoaded", function () {
+            fetch('anniversaries.csv')
+                .then(response => response.text())
+                .then(data => {
+                    const currentDate = new Date();
+                    const currentYear = currentDate.getFullYear();
+
+                    const anniversaries = data.split('\n');
+                    const anniversaryList = document.getElementById('anniversaryList');
+
+                    const upcomingAnniversaries = [];
+
+                    anniversaries.forEach(anniversary => {
+                        const [name, dateStr] = anniversary.split(',');
+                        const [year, month, day] = dateStr.split('-');
+
+                        const anniversaryDate = new Date(currentYear, month - 1, day);
+
+                        const yearsAtCompany = currentYear - year;
+
+                        if (yearsAtCompany >= 0) {
+                            if (
+                                (anniversaryDate.getMonth() === currentDate.getMonth() && anniversaryDate.getDate() === currentDate.getDate()) ||
+                                anniversaryDate > currentDate
+                            ) {
+                                upcomingAnniversaries.push({
+                                    name: name.trim(),
+                                    years: yearsAtCompany,
+                                    month: month,
+                                    day: day
+                                });
+                            }
+                        }
+                    });
+
+                    // Sort upcoming anniversaries by date
+                    upcomingAnniversaries.sort((a, b) => {
+                        if (a.month !== b.month) {
+                            return a.month - b.month;
+                        }
+                        return a.day - b.day;
+                    });
+
+                    // Limit displayed items to 10
+                    upcomingAnniversaries.slice(0, 10).forEach(anniversary => {
+                        const employeeContainer = document.createElement('div');
+                        const nameDiv = document.createElement('div');
+                        const yearsDiv = document.createElement('div');
+                        const dateDiv = document.createElement('div');
+                        employeeContainer.className = 'employee';
+
+                        nameDiv.textContent = anniversary.name;
+                        nameDiv.className = 'name';
+
+                        yearsDiv.textContent = `• ${anniversary.years} years`;
+                        yearsDiv.className = 'years';
+
+                        dateDiv.textContent = `on ${anniversary.month}/${anniversary.day}`;
+                        dateDiv.className = 'date';
+
+                        employeeContainer.appendChild(nameDiv);
+                        employeeContainer.appendChild(yearsDiv);
+                        employeeContainer.appendChild(dateDiv);
+                        anniversaryList.appendChild(employeeContainer);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading CSV file:', error);
+                });
+        });
+    </script>
+</body>
+</html>
