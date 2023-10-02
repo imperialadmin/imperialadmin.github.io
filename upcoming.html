@@ -5,33 +5,47 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Work Anniversaries</title>
     <style>
-        #anniversaryList {
-            margin: auto;
-            padding: 20px;
-            width:1000px;
-            background-color: rgb(28, 28, 28);
-        }
         .employee {
             display: flex;
-            justify-content: center;
-            align-items: center;
+            align-items: left;
+            justify-content: left;
             font-family: "DM Sans", Arial, Helvetica, sans-serif;
-            font-size: 25px;
+            font-size: 20px;
             font-weight: 500;
-            background-color:rgb(237, 237, 237);
-            padding: 20px;
-            margin: 10px 0;
+            margin: 15px 0;
+            width: 500px;
         }
         .name {
-            padding-right: 5px;
+            font-weight: bold;
+            padding: 15px 15px;
+            width:250px;
         }
         .years {
-            padding-right: 10px;
+            padding: 10px 10px;
+            margin: 5px 0;
+            background-color: #000000;
+            border-radius: 20px;
+            color: #ffffff;
+            width: 100px;
+            text-align: center;
         }
         .date {
-            padding-top: 3px;
-            font-size: 18px;
             color: #555;
+            text-align: center;
+            border-right: 3px solid #cf152d;
+            padding: 0.125em 0.75em;
+        }
+        .month {
+            font-size: 0.75em;
+            font-weight: bold;
+            display: block;
+            width: 100%;
+            text-transform: uppercase;
+        }
+        .day {
+            font-size: 1.2em;
+            display:block;
+            width: 100%;
         }
     </style>
 </head>
@@ -70,7 +84,7 @@
                                 upcomingAnniversaries.push({
                                     name: name.trim(),
                                     years: yearsAtCompany,
-                                    month: month,
+                                    month: new Intl.DateTimeFormat('en-US', { month: 'short' }).format(anniversaryDate),
                                     day: day
                                 });
                             }
@@ -80,31 +94,43 @@
                     // Sort upcoming anniversaries by date
                     upcomingAnniversaries.sort((a, b) => {
                         if (a.month !== b.month) {
-                            return a.month - b.month;
+                            return a.month.localeCompare(b.month);
                         }
                         return a.day - b.day;
                     });
 
-                    // Limit displayed items to 10
-                    upcomingAnniversaries.slice(0, 10).forEach(anniversary => {
+                    // Limit displayed items to 8
+                    upcomingAnniversaries.slice(0, 8).forEach(anniversary => {
                         const employeeContainer = document.createElement('div');
                         const nameDiv = document.createElement('div');
                         const yearsDiv = document.createElement('div');
                         const dateDiv = document.createElement('div');
+                        const monthSpan = document.createElement('span'); // Create a <span> for the month
+                        const daySpan = document.createElement('span');   // Create a <span> for the day
                         employeeContainer.className = 'employee';
 
                         nameDiv.textContent = anniversary.name;
                         nameDiv.className = 'name';
 
-                        yearsDiv.textContent = `• ${anniversary.years} years`;
+                        yearsDiv.textContent = ` ${anniversary.years} years `;
                         yearsDiv.className = 'years';
 
-                        dateDiv.textContent = `on ${anniversary.month}/${anniversary.day}`;
+                        // Set the text content and class for the month and day <span> elements
+                        monthSpan.textContent = anniversary.month;
+                        monthSpan.className = 'month';
+                        daySpan.textContent = anniversary.day;
+                        daySpan.className = 'day';
+
+                        // Append the <span> elements to the dateDiv
+                        dateDiv.appendChild(monthSpan);
+                        dateDiv.appendChild(document.createTextNode(' ')); // Add a space between month and day
+                        dateDiv.appendChild(daySpan);
+
                         dateDiv.className = 'date';
 
+                        employeeContainer.appendChild(dateDiv);
                         employeeContainer.appendChild(nameDiv);
                         employeeContainer.appendChild(yearsDiv);
-                        employeeContainer.appendChild(dateDiv);
                         anniversaryList.appendChild(employeeContainer);
                     });
                 })
