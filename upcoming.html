@@ -23,16 +23,16 @@
         .years {
             padding: 10px 10px;
             margin: 5px 0;
-            background-color: #000000;
+            background-color: #343434;
             border-radius: 20px;
             color: #ffffff;
             width: 100px;
             text-align: center;
         }
         .date {
-            color: #555;
+            color: #343434;
             text-align: center;
-            border-right: 3px solid #cf152d;
+            border-right: 3px solid #7c7c7c;
             padding: 0.125em 0.75em;
         }
         .month {
@@ -46,6 +46,14 @@
             font-size: 1.2em;
             display:block;
             width: 100%;
+        }
+        /* Additional CSS for matching today's date */
+        .today.date {
+            border-right: 3px solid #cf152d; /* Change border color to blue */
+            color: #000000;
+        }
+        .today.years {
+            background-color: #cf152d; /* Change background color to blue */
         }
     </style>
 </head>
@@ -126,6 +134,15 @@
                         dateDiv.appendChild(daySpan);
 
                         dateDiv.className = 'date';
+
+                        // Check if it's today's date and add the "today" class
+                        if (
+                            currentDate.getDate() === parseInt(anniversary.day) &&
+                            currentDate.getMonth() === parseInt(anniversary.month) - 1
+                        ) {
+                            dateDiv.classList.add('today');
+                            yearsDiv.classList.add('today');
+                        }
 
                         employeeContainer.appendChild(dateDiv);
                         employeeContainer.appendChild(nameDiv);
