@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Employee Birthdays</title>
+    <style>
+        /* Add CSS styles here */
+        .birthday-container {
+            max-width: 600px;
+        }
+
+        .birthday {
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="mainHeading">Today's Employee Birthdays</h1>
+    <h2 id="upcomingDateHeader" style="display: none;"><span id="upcomingDate"></span></h2>
+    <div id="birthdayList" class="birthday-container">
+        <!-- Employee birthdays will be displayed here -->
+    </div>
+
+    <script>
+        // JavaScript code to load and display employee birthdays
+        document.addEventListener("DOMContentLoaded", function () {
+            // Function to parse CSV data
+            function parseCSV(csv) {
+                return csv.split('\n').map(function (row) {
+                    return row.split(',');
+                });
+            }
+
+            // Function to check if a date matches today's date
+            function isToday(date) {
+                const today = new Date();
+                const parts = date.split('-');
+                return today.getMonth() + 1 === parseInt(parts[0]) && today.getDate() === parseInt(parts[1]);
+            }
+
+            // Function to calculate font size based on the number of birthdays
+            function calculateFontSize(numBirthdays) {
+                const maxFontSize = 24;
+                const minFontSize = 16;
+                const step = (maxFontSize - minFontSize) / 5; // Adjust this factor as needed
+                
+                return maxFontSize - (numBirthdays - 1) * step;
+            }
+
+            // Function to find and display upcoming birthdays
+            function displayUpcomingBirthdays(data) {
+                const today = new Date();
+                const upcomingDates = data
+                    .map(row => row[0])
+                    .filter(date => {
+                        const parts = date.split('-');
+                        const birthdayDate = new Date(today.getFullYear(), parseInt(parts[0]) - 1, parseInt(parts[1]));
+                        return birthdayDate > today;
+                    })
+                    .sort((a, b) => {
+                        const dateA = new Date(today.getFullYear(), parseInt(a.split('-')[0]) - 1, parseInt(a.split('-')[1]));
+                        const dateB = new Date(today.getFullYear(), parseInt(b.split('-')[0]) - 1, parseInt(b.split('-')[1]));
+                        return dateA - dateB;
+                    });
+
+                if (upcomingDates.length > 0) {
+                    const upcomingDateHeader = document.getElementById('upcomingDateHeader');
+                    const upcomingDate = document.getElementById('upcomingDate');
+                    const mainHeading = document.getElementById('mainHeading');
+                    const birthdayList = document.getElementById('birthdayList');
+                    birthdayList.innerHTML = '';
+
+                    const fontSize = calculateFontSize(upcomingDates.length);
+                    upcomingDateHeader.style.display = 'block';
+                    mainHeading.textContent = upcomingDates.length === 1 ? 'Upcoming Birthday' : 'Upcoming Birthdays';
+                    upcomingDate.textContent = upcomingDates[0];
+
+                    data.forEach(row => {
+                        if (row[0] === upcomingDates[0]) {
+                            const employeeName = row[1];
+                            const birthdayDiv = document.createElement('div');
+                            birthdayDiv.className = 'birthday';
+                            birthdayDiv.textContent = employeeName;
+                            birthdayDiv.style.fontSize = fontSize + 'px';
+                            birthdayList.appendChild(birthdayDiv);
+                        }
+                    });
+                } else {
+                    document.getElementById('mainHeading').textContent = 'No upcoming birthdays.';
+                }
+            }
+
+            // Read and process the CSV file
+            fetch('birthdays.csv')
+                .then(response => response.text())
+                .then(data => {
+                    const parsedData = parseCSV(data);
+
+                    if (parsedData.some(row => isToday(row[0]))) {
+                        const todayBirthdays = parsedData.filter(row => isToday(row[0]));
+                        const fontSize = calculateFontSize(todayBirthdays.length);
+
+                        todayBirthdays.forEach(birthday => {
+                            const employeeName = birthday[1];
+                            const birthdayDiv = document.createElement('div');
+                            birthdayDiv.className = 'birthday';
+                            birthdayDiv.textContent = employeeName;
+                            birthdayDiv.style.fontSize = fontSize + 'px';
+                            birthdayList.appendChild(birthdayDiv);
+                        });
+
+                        document.getElementById('mainHeading').textContent = 'Happy Birthday!';
+                    } else {
+                        displayUpcomingBirthdays(parsedData);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading CSV:', error);
+                });
+        });
+    </script>
+</body>
+</html>
