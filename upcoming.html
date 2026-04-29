@@ -78,6 +78,8 @@
                     const upcomingAnniversaries = [];
 
                     anniversaries.forEach(anniversary => {
+                        if (!anniversary.trim()) return;
+                        
                         const [name, dateStr] = anniversary.split(',');
                         const [year, month, day] = dateStr.split('-');
 
