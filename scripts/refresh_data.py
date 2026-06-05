@@ -10,8 +10,8 @@ Usage:
     python scripts/refresh_data.py
     python scripts/refresh_data.py path/to/export.csv
 
-Drop the UKG export anywhere and pass its path, or place it in
-scripts/input/ and run without arguments.
+Drop the UKG export in scripts/input/ and run without arguments,
+or pass a file path explicitly.
 """
 
 import sys
@@ -19,6 +19,7 @@ import re
 import os
 import glob
 import pandas as pd
+from datetime import date
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 INPUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "input")
@@ -34,14 +35,24 @@ def transform_name(name: str) -> str:
 
 
 def find_input_file() -> str:
-    csvs = glob.glob(os.path.join(INPUT_DIR, "*.csv"))
+    csvs = [f for f in glob.glob(os.path.join(INPUT_DIR, "*.csv"))
+            if not os.path.basename(f).startswith("processed_")]
     if not csvs:
-        print(f"Error: No CSV found in scripts/input/")
+        print(f"Error: No unprocessed CSV found in scripts/input/")
         sys.exit(1)
     if len(csvs) > 1:
         print(f"Multiple CSVs found: {[os.path.basename(f) for f in csvs]}")
         print(f"Using: {os.path.basename(csvs[0])}")
     return csvs[0]
+
+
+def archive_input(input_path: str):
+    dirname = os.path.dirname(input_path)
+    basename = os.path.basename(input_path)
+    new_name = f"processed_{date.today()}_{basename}"
+    new_path = os.path.join(dirname, new_name)
+    os.rename(input_path, new_path)
+    print(f"✓ Input renamed to {new_name}")
 
 
 def process(input_path: str):
@@ -65,6 +76,8 @@ def process(input_path: str):
 
     df[["Birth Date", "Name"]].to_csv(OUTPUT_BIRTHDAYS, index=False, header=False)
     print(f"✓ birthdays.csv  ({len(df)} rows)")
+
+    archive_input(input_path)
 
 
 if __name__ == "__main__":
