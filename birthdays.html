@@ -5,6 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Employee Birthdays</title>
     <style>
+        @font-face {
+            font-family: "DM Sans";
+            font-style: normal;
+            font-weight: 100 1000;
+            font-display: swap;
+            src: url('fonts/DMSans-latin.woff2') format('woff2');
+            unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+        }
+
+        @font-face {
+            font-family: "DM Sans";
+            font-style: normal;
+            font-weight: 100 1000;
+            font-display: swap;
+            src: url('fonts/DMSans-latin-ext.woff2') format('woff2');
+            unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+        }
+
         html, body {
             margin: 0;
             padding: 0;
@@ -21,15 +39,9 @@
             overflow: hidden;
             pointer-events: none;
             background-image: url('birthday-confetti.png');
-            background-repeat: no-repeat;
+            background-repeat: repeat-y;
             background-position: top center;
             background-size: 100% auto;
-        }
-
-        @media (max-width: 1200px) {
-            #decor {
-                background-repeat: repeat-y;
-            }
         }
 
         #stage {
@@ -68,7 +80,7 @@
             color: #ea9999;
             font-weight: 900;
             padding: 2vh 0 0;
-            font-size: clamp(2rem, 6vw, 6rem);
+            font-size: clamp(2rem, 9vmin, 6rem);
         }
 
         #birthdayBox {
@@ -82,19 +94,23 @@
         }
 
         #birthdayList {
-            display: flex;
-            flex-wrap: wrap;
+            display: grid;
+            grid-auto-flow: column;
+            grid-auto-columns: max-content;
             justify-content: center;
             align-content: center;
-            gap: 0.3em 1.2em;
+            justify-items: center;
+            column-gap: 1.4em;
+            row-gap: 0.25em;
             max-width: 100%;
             color: #ffffff;
-            font-weight: 700;
+            font-weight: 400;
             line-height: 1.25;
         }
 
         .birthday-name {
             white-space: nowrap;
+            text-align: center;
         }
 
         #fallback {
@@ -137,6 +153,7 @@
         document.addEventListener('DOMContentLoaded', function () {
             const box = document.getElementById('birthdayBox');
             const list = document.getElementById('birthdayList');
+            const heading = document.getElementById('heading');
             const fallback = document.getElementById('fallback');
 
             let names = [];
@@ -163,8 +180,24 @@
                 fallback.src = isLandscape ? '1080p-imperial-sign.jpg' : '1080p-imperial-sign-vertical.jpg';
             }
 
+            // Column count as a function of how many names there are today —
+            // deliberately independent of orientation, so the same day's
+            // names arrange the same way in landscape and portrait. Small
+            // counts stay a single readable column; more names step up to
+            // additional columns so the list doesn't run too tall (and font
+            // size too small) to fit.
+            function columnsForCount(count) {
+                if (count <= 4) return 1;
+                if (count <= 8) return 2;
+                if (count <= 15) return 3;
+                return 4;
+            }
+
             function renderNames() {
                 list.innerHTML = '';
+                const columns = columnsForCount(names.length);
+                const rows = Math.ceil(names.length / columns);
+                list.style.gridTemplateRows = 'repeat(' + rows + ', max-content)';
                 names.forEach(function (name) {
                     const span = document.createElement('span');
                     span.className = 'birthday-name';
@@ -179,14 +212,17 @@
             // include the box's own padding, so that padding must be
             // subtracted to get the actual area available to its content —
             // otherwise the fitted text overflows into (and is clipped by)
-            // the padding, cutting names off at the edges.
+            // the padding, cutting names off at the edges. Capped below the
+            // heading's own size so names never grow larger than "Happy
+            // Birthday!" even when there's only one name to display.
             function fitText() {
                 if (!names.length) return;
                 const cs = getComputedStyle(box);
                 const availWidth = box.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
                 const availHeight = box.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+                const headingSize = parseFloat(getComputedStyle(heading).fontSize);
 
-                let lo = 8, hi = 400;
+                let lo = 8, hi = Math.max(lo, Math.floor(headingSize * 0.8));
                 while (lo < hi) {
                     const mid = Math.ceil((lo + hi) / 2);
                     list.style.fontSize = mid + 'px';
