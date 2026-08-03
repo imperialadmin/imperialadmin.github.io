@@ -9,10 +9,10 @@ Internal Imperial site, hosted via GitHub Pages, that displays employee birthday
 | `today.html` | Today's work anniversaries — unused |
 | `upcoming.html` | Upcoming work anniversaries (full year, highlights today) — shown on signage |
 | `monthly.html` | Current month's work anniversaries — unused |
-| `birthdays.html` | Today's/upcoming birthdays — unused |
+| `birthdays.html` | Today's birthdays, with a fallback signage image on days with none |
 | `instagram.html` | Embedded Imperial Instagram feed - shown on signage |
 | `anniversaries.csv` | Generated data consumed by `upcoming.html` |
-| `birthdays.csv` | Generated data; currently uploaded manually to Yodeck (see below), not consumed by `birthdays.html` |
+| `birthdays.csv` | Generated data, consumed by `birthdays.html`; also still uploaded manually to Yodeck (see below) |
 | `1080p-imperial-sign.jpg` / `1080p-imperial-sign-vertical.jpg` | Imperial signage/logo images |
 | `scripts/` | Python tooling that generates the two CSVs above from an HR export — see below |
 

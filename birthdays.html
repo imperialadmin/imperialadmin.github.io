@@ -1,120 +1,237 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Employee Birthdays</title>
     <style>
-        /* Add CSS styles here */
-        .birthday-container {
-            max-width: 600px;
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            font-family: "DM Sans", Arial, Helvetica, sans-serif;
+            background-color: #444444;
         }
 
-        .birthday {
-            margin: 10px;
+        #decor {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
+            background-image: url('birthday-confetti.png');
+            background-repeat: no-repeat;
+            background-position: top center;
+            background-size: 100% auto;
+        }
+
+        @media (max-width: 1200px) {
+            #decor {
+                background-repeat: repeat-y;
+            }
+        }
+
+        #stage {
+            position: relative;
+            z-index: 1;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            padding: 6vh 6vw;
+        }
+
+        #cake {
+            flex: 0 0 auto;
+            display: flex;
+            justify-content: center;
+            padding-bottom: 2vh;
+        }
+
+        .cake-illustration {
+            width: min(26vw, 34vh);
+            height: auto;
+        }
+
+        @media (orientation: portrait) {
+            .cake-illustration {
+                width: min(50vw, 30vh);
+            }
+        }
+
+        #heading {
+            flex: 0 0 auto;
+            margin: 0;
+            text-align: center;
+            color: #ea9999;
+            font-weight: 900;
+            padding: 2vh 0 0;
+            font-size: clamp(2rem, 6vw, 6rem);
+        }
+
+        #birthdayBox {
+            flex: 1 1 auto;
+            min-height: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        #birthdayList {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-content: center;
+            gap: 0.3em 1.2em;
+            max-width: 100%;
+            color: #ffffff;
+            font-weight: 700;
+            line-height: 1.25;
+        }
+
+        .birthday-name {
+            white-space: nowrap;
+        }
+
+        #fallback {
+            position: relative;
+            z-index: 2;
+            display: none;
+            height: 100vh;
+            width: 100vw;
+            object-fit: cover;
+        }
+
+        body.no-birthdays #decor {
+            display: none;
+        }
+
+        body.no-birthdays #stage {
+            display: none;
+        }
+
+        body.no-birthdays #fallback {
+            display: block;
         }
     </style>
 </head>
 <body>
-    <h1 id="mainHeading">Today's Employee Birthdays</h1>
-    <h2 id="upcomingDateHeader" style="display: none;"><span id="upcomingDate"></span></h2>
-    <div id="birthdayList" class="birthday-container">
-        <!-- Employee birthdays will be displayed here -->
+    <div id="decor" aria-hidden="true"></div>
+
+    <div id="stage">
+        <div id="cake" aria-hidden="true">
+            <img class="cake-illustration" src="birthday-cake.png" alt="">
+        </div>
+        <div id="birthdayBox">
+            <div id="birthdayList"></div>
+        </div>
+        <h1 id="heading">Happy Birthday!</h1>
     </div>
+    <img id="fallback" alt="Imperial">
 
     <script>
-        // JavaScript code to load and display employee birthdays
-        document.addEventListener("DOMContentLoaded", function () {
-            // Function to parse CSV data
-            function parseCSV(csv) {
-                return csv.split('\n').map(function (row) {
-                    return row.split(',');
+        document.addEventListener('DOMContentLoaded', function () {
+            const box = document.getElementById('birthdayBox');
+            const list = document.getElementById('birthdayList');
+            const fallback = document.getElementById('fallback');
+
+            let names = [];
+
+            function parseCSV(text) {
+                return text.split('\n')
+                    .map(function (line) { return line.trim(); })
+                    .filter(function (line) { return line.length > 0; })
+                    .map(function (line) { return line.split(',').map(function (cell) { return cell.trim(); }); });
+            }
+
+            // BirthDate is YYYY-MM-DD; compare month/day only, ignoring year,
+            // without routing through `new Date(dateStr)` (which parses as UTC
+            // and can shift the day depending on local timezone).
+            function isTodayBirthday(dateStr) {
+                const parts = dateStr.split('-');
+                const today = new Date();
+                return parseInt(parts[1], 10) === today.getMonth() + 1 &&
+                    parseInt(parts[2], 10) === today.getDate();
+            }
+
+            function updateFallbackImage() {
+                const isLandscape = window.innerWidth >= window.innerHeight;
+                fallback.src = isLandscape ? '1080p-imperial-sign.jpg' : '1080p-imperial-sign-vertical.jpg';
+            }
+
+            function renderNames() {
+                list.innerHTML = '';
+                names.forEach(function (name) {
+                    const span = document.createElement('span');
+                    span.className = 'birthday-name';
+                    span.textContent = name;
+                    list.appendChild(span);
                 });
             }
 
-            // Function to check if a date matches today's date
-            function isToday(date) {
-                const today = new Date();
-                const parts = date.split('-');
-                return today.getMonth() + 1 === parseInt(parts[0]) && today.getDate() === parseInt(parts[1]);
+            // Binary search for the largest font size that still fits the
+            // available box, so the display scales cleanly from 1 name to a
+            // crowded day without a fixed size table. clientWidth/clientHeight
+            // include the box's own padding, so that padding must be
+            // subtracted to get the actual area available to its content —
+            // otherwise the fitted text overflows into (and is clipped by)
+            // the padding, cutting names off at the edges.
+            function fitText() {
+                if (!names.length) return;
+                const cs = getComputedStyle(box);
+                const availWidth = box.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+                const availHeight = box.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+
+                let lo = 8, hi = 400;
+                while (lo < hi) {
+                    const mid = Math.ceil((lo + hi) / 2);
+                    list.style.fontSize = mid + 'px';
+                    const fits = list.scrollWidth <= availWidth && list.scrollHeight <= availHeight;
+                    if (fits) {
+                        lo = mid;
+                    } else {
+                        hi = mid - 1;
+                    }
+                }
+                list.style.fontSize = lo + 'px';
             }
 
-            // Function to calculate font size based on the number of birthdays
-            function calculateFontSize(numBirthdays) {
-                const maxFontSize = 24;
-                const minFontSize = 16;
-                const step = (maxFontSize - minFontSize) / 5; // Adjust this factor as needed
-                
-                return maxFontSize - (numBirthdays - 1) * step;
-            }
-
-            // Function to find and display upcoming birthdays
-            function displayUpcomingBirthdays(data) {
-                const today = new Date();
-                const upcomingDates = data
-                    .map(row => row[0])
-                    .filter(date => {
-                        const parts = date.split('-');
-                        const birthdayDate = new Date(today.getFullYear(), parseInt(parts[0]) - 1, parseInt(parts[1]));
-                        return birthdayDate > today;
-                    })
-                    .sort((a, b) => {
-                        const dateA = new Date(today.getFullYear(), parseInt(a.split('-')[0]) - 1, parseInt(a.split('-')[1]));
-                        const dateB = new Date(today.getFullYear(), parseInt(b.split('-')[0]) - 1, parseInt(b.split('-')[1]));
-                        return dateA - dateB;
-                    });
-
-                if (upcomingDates.length > 0) {
-                    const upcomingDateHeader = document.getElementById('upcomingDateHeader');
-                    const upcomingDate = document.getElementById('upcomingDate');
-                    const mainHeading = document.getElementById('mainHeading');
-                    const birthdayList = document.getElementById('birthdayList');
-                    birthdayList.innerHTML = '';
-
-                    const fontSize = calculateFontSize(upcomingDates.length);
-                    upcomingDateHeader.style.display = 'block';
-                    mainHeading.textContent = upcomingDates.length === 1 ? 'Upcoming Birthday' : 'Upcoming Birthdays';
-                    upcomingDate.textContent = upcomingDates[0];
-
-                    data.forEach(row => {
-                        if (row[0] === upcomingDates[0]) {
-                            const employeeName = row[1];
-                            const birthdayDiv = document.createElement('div');
-                            birthdayDiv.className = 'birthday';
-                            birthdayDiv.textContent = employeeName;
-                            birthdayDiv.style.fontSize = fontSize + 'px';
-                            birthdayList.appendChild(birthdayDiv);
-                        }
-                    });
+            function handleResize() {
+                if (document.body.classList.contains('no-birthdays')) {
+                    updateFallbackImage();
                 } else {
-                    document.getElementById('mainHeading').textContent = 'No upcoming birthdays.';
+                    fitText();
                 }
             }
 
-            // Read and process the CSV file
+            let resizeTimer = null;
+            window.addEventListener('resize', function () {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(handleResize, 100);
+            });
+
             fetch('birthdays.csv')
-                .then(response => response.text())
-                .then(data => {
-                    const parsedData = parseCSV(data);
+                .then(function (response) { return response.text(); })
+                .then(function (data) {
+                    const rows = parseCSV(data);
+                    names = rows
+                        .filter(function (row) { return row.length >= 2 && isTodayBirthday(row[0]); })
+                        .map(function (row) { return row[1]; });
 
-                    if (parsedData.some(row => isToday(row[0]))) {
-                        const todayBirthdays = parsedData.filter(row => isToday(row[0]));
-                        const fontSize = calculateFontSize(todayBirthdays.length);
-
-                        todayBirthdays.forEach(birthday => {
-                            const employeeName = birthday[1];
-                            const birthdayDiv = document.createElement('div');
-                            birthdayDiv.className = 'birthday';
-                            birthdayDiv.textContent = employeeName;
-                            birthdayDiv.style.fontSize = fontSize + 'px';
-                            birthdayList.appendChild(birthdayDiv);
-                        });
-
-                        document.getElementById('mainHeading').textContent = 'Happy Birthday!';
+                    if (names.length === 0) {
+                        document.body.classList.add('no-birthdays');
+                        updateFallbackImage();
                     } else {
-                        displayUpcomingBirthdays(parsedData);
+                        renderNames();
+                        fitText();
                     }
                 })
-                .catch(error => {
-                    console.error('Error loading CSV:', error);
+                .catch(function (error) {
+                    console.error('Error loading birthdays.csv:', error);
                 });
         });
     </script>
