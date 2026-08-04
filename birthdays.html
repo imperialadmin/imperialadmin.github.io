@@ -158,6 +158,14 @@
 
             let names = [];
 
+            // Testing flags — leave both false/null for normal behavior.
+            const FORCE_NO_BIRTHDAYS = false; // true: always show the no-birthdays fallback view.
+            const FAKE_DATE = null; // e.g. '2026-12-25': treat that date as "today" instead of the real date.
+
+            function getToday() {
+                return FAKE_DATE ? new Date(FAKE_DATE + 'T00:00:00') : new Date();
+            }
+
             function parseCSV(text) {
                 return text.split('\n')
                     .map(function (line) { return line.trim(); })
@@ -170,7 +178,7 @@
             // and can shift the day depending on local timezone).
             function isTodayBirthday(dateStr) {
                 const parts = dateStr.split('-');
-                const today = new Date();
+                const today = getToday();
                 return parseInt(parts[1], 10) === today.getMonth() + 1 &&
                     parseInt(parts[2], 10) === today.getDate();
             }
@@ -254,7 +262,7 @@
                 .then(function (response) { return response.text(); })
                 .then(function (data) {
                     const rows = parseCSV(data);
-                    names = rows
+                    names = FORCE_NO_BIRTHDAYS ? [] : rows
                         .filter(function (row) { return row.length >= 2 && isTodayBirthday(row[0]); })
                         .map(function (row) { return row[1]; });
 
