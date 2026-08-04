@@ -160,7 +160,7 @@
 
             // Testing flags — leave both false/null for normal behavior.
             const FORCE_NO_BIRTHDAYS = false; // true: always show the no-birthdays fallback view.
-            const FAKE_DATE = null; // e.g. '2026-12-25': treat that date as "today" instead of the real date.
+            const FAKE_DATE = null; // e.g. null or '2026-12-25': treat that date as "today" instead of the real date.
 
             function getToday() {
                 return FAKE_DATE ? new Date(FAKE_DATE + 'T00:00:00') : new Date();
@@ -188,13 +188,20 @@
                 fallback.src = isLandscape ? '1080p-imperial-sign.jpg' : '1080p-imperial-sign-vertical.jpg';
             }
 
-            // Column count as a function of how many names there are today —
-            // deliberately independent of orientation, so the same day's
-            // names arrange the same way in landscape and portrait. Small
-            // counts stay a single readable column; more names step up to
-            // additional columns so the list doesn't run too tall (and font
-            // size too small) to fit.
+            // Column count as a function of how many names there are today.
+            // Small counts stay a single readable column; more names step up
+            // to additional columns so the list doesn't run too tall (and
+            // font size too small) to fit. Portrait screens have far more
+            // vertical room per column than landscape ones, so each column
+            // holds roughly twice as many names before another is added.
             function columnsForCount(count) {
+                const isPortrait = window.innerHeight > window.innerWidth;
+                if (isPortrait) {
+                    if (count <= 8) return 1;
+                    if (count <= 16) return 2;
+                    if (count <= 30) return 3;
+                    return 4;
+                }
                 if (count <= 4) return 1;
                 if (count <= 8) return 2;
                 if (count <= 15) return 3;
@@ -248,6 +255,7 @@
                 if (document.body.classList.contains('no-birthdays')) {
                     updateFallbackImage();
                 } else {
+                    renderNames();
                     fitText();
                 }
             }
@@ -258,7 +266,7 @@
                 resizeTimer = setTimeout(handleResize, 100);
             });
 
-            fetch('birthdays.csv')
+            fetch('birthdays.csv', { cache: 'no-store' })
                 .then(function (response) { return response.text(); })
                 .then(function (data) {
                     const rows = parseCSV(data);
