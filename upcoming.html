@@ -102,11 +102,18 @@
                         }
                     });
 
-                    // Sort upcoming anniversaries by date (month, day)
+                    // Sort upcoming anniversaries by date (month, day), then by years
+                    // (most to least) and first name (A-Z) for anyone sharing a date
                     upcomingAnniversaries.sort((a, b) => {
                         const dateA = new Date(currentYear, a.month - 1, a.day);
                         const dateB = new Date(currentYear, b.month - 1, b.day);
-                        return dateA - dateB;
+                        if (dateA - dateB !== 0) return dateA - dateB;
+
+                        if (b.years !== a.years) return b.years - a.years;
+
+                        const firstNameA = a.name.split(' ')[0];
+                        const firstNameB = b.name.split(' ')[0];
+                        return firstNameA.localeCompare(firstNameB);
                     });
 
                     // Limit displayed items to 10
