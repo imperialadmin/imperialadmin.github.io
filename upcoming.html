@@ -129,7 +129,7 @@
                         nameDiv.textContent = anniversary.name;
                         nameDiv.className = 'name';
 
-                        yearsDiv.textContent = anniversary.years === 0 ? ' New Hire ' : ` ${anniversary.years} years `;
+                        yearsDiv.textContent = anniversary.years === 0 ? ' New Hire ' : ` ${anniversary.years} year${anniversary.years === 1 ? '' : 's'} `;
                         yearsDiv.className = 'years';
 
                         // Set the text content and class for the month and day <span> elements
